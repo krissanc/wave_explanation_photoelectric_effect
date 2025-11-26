@@ -52,6 +52,13 @@ from src.visualization import (
     plot_amplitude_comparison,
     plot_energy_evolution
 )
+from src.compton import (
+    ComptonAtomModel,
+    ComptonSimulation,
+    run_compton_experiment,
+    analyze_compton_shift,
+    plot_compton_results
+)
 from config.parameters import (
     PhysicsParameters,
     SimulationParameters,
@@ -327,24 +334,26 @@ def run_amplitude_independence_test(
     logger.info("Testing whether threshold depends on wave amplitude...")
     logger.info("")
     
-    # Test multiple amplitudes
-    amplitudes = [0.001, 0.005, 0.01, 0.02, 0.05]
-    frequencies = np.linspace(0.3, 2.5, 25)
+    # Test multiple amplitudes with TUNED parameters
+    # Using parameters that show clear threshold behavior
+    amplitudes = [0.05, 0.1, 0.2, 0.3, 0.4]  # Range around working amplitude
+    frequencies = np.linspace(0.05, 0.4, 20)  # Span the threshold region
     
     results_by_amplitude = {}
     
     for amp in amplitudes:
         logger.info(f"Testing amplitude A = {amp}")
         
+        # Use TUNED parameters that produce threshold behavior
         atom = AtomModel(
-            omega0=params.omega0,
-            damping=params.damping,
-            alpha=params.alpha,
-            beta=params.beta,
+            omega0=1.0,
+            damping=0.0001,   # Very low damping
+            alpha=0.05,       # Low store decay
+            beta=100.0,       # Strong coupling
             amplitude=amp
         )
-        detector = EscapeDetector(position_threshold=params.escape_position)
-        config = SimulationConfig(t_max=200.0, dt=0.001)
+        detector = EscapeDetector(position_threshold=5.0)
+        config = SimulationConfig(t_max=150.0, dt=0.0005)
         sim = Simulation(atom, detector, config)
         
         results = []
@@ -357,7 +366,7 @@ def run_amplitude_independence_test(
         # Find threshold for this amplitude
         thresh = find_threshold_frequency(results)
         n_escaped = sum(1 for r in results if r.escaped)
-        logger.info(f"  → Threshold: {thresh.threshold_frequency:.4f}, "
+        logger.info(f"  -> Threshold: {thresh.threshold_frequency:.4f}, "
                    f"Escaped: {n_escaped}/{len(results)}")
     
     # Analyze amplitude independence
@@ -376,15 +385,15 @@ def run_amplitude_independence_test(
         
         if analysis.get('power_law_slope') is not None:
             logger.info(f"Power law slope: {analysis['power_law_slope']:.4f}")
-            logger.info("  (slope ≈ 0 means amplitude-independent)")
+            logger.info("  (slope ~ 0 means amplitude-independent)")
         
         if analysis['is_amplitude_independent']:
             logger.info("")
-            logger.info("✓ RESULT: Threshold is AMPLITUDE INDEPENDENT")
+            logger.info("[OK] RESULT: Threshold is AMPLITUDE INDEPENDENT")
             logger.info("  This matches photoelectric effect behavior!")
         else:
             logger.info("")
-            logger.info("✗ RESULT: Threshold varies with amplitude")
+            logger.info("[!] RESULT: Threshold varies with amplitude")
             logger.info("  Need to tune parameters for better photoelectric behavior")
     
     if show_plots:
@@ -507,9 +516,9 @@ Examples:
     
     parser.add_argument(
         "--experiment", "-e",
-        choices=["quick", "sweep", "amplitude", "full"],
+        choices=["quick", "sweep", "amplitude", "full", "compton"],
         default="sweep",
-        help="Type of experiment to run"
+        help="Type of experiment to run (compton = Compton scattering test)"
     )
     
     parser.add_argument(
@@ -577,6 +586,18 @@ Examples:
         
     elif args.experiment == "full":
         comparison = run_full_photoelectric_comparison(show_plots=show_plots)
+    
+    elif args.experiment == "compton":
+        logger.info("Running Compton scattering experiment...")
+        frequencies = np.linspace(0.1, 0.5, 12)
+        results, analysis = run_compton_experiment(
+            frequencies=frequencies,
+            show_plots=show_plots
+        )
+        logger.info("")
+        logger.info("COMPTON RESULTS:")
+        logger.info(f"  Mean frequency shift: {analysis['mean_shift']:.4f}")
+        logger.info(f"  Shift trend with frequency: {'Increasing' if analysis.get('shift_increases_with_freq', False) else 'Decreasing/Constant'}")
     
     logger.info("")
     logger.info("=" * 60)

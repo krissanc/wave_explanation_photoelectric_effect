@@ -306,9 +306,9 @@ def analyze_amplitude_independence(
     }
     
     if analysis['is_amplitude_independent']:
-        logger.info("✓ Threshold appears AMPLITUDE INDEPENDENT (photoelectric-like)")
+        logger.info("[OK] Threshold appears AMPLITUDE INDEPENDENT (photoelectric-like)")
     else:
-        logger.info(f"✗ Threshold varies with amplitude (variation: {threshold_variation:.2%})")
+        logger.info(f"[!] Threshold varies with amplitude (variation: {threshold_variation:.2%})")
     
     return analysis
 
