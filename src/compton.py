@@ -1,30 +1,40 @@
 """
-Compton Scattering Extension - Output Wave Emission
+Compton Scattering Extension - Wave-Only Model
 
 This module extends the photoelectric model to include wave emission,
-enabling investigation of Compton-like scattering behavior through
-pure wave mechanics.
+investigating Compton-like scattering through PURE WAVE MECHANICS.
 
-In Compton scattering:
-- Incoming photon scatters off electron
-- Outgoing photon has lower frequency (wavelength shift)
-- The shift depends on scattering angle
+IMPORTANT: We do NOT use momentum transfer or photon concepts.
 
-Wave interpretation:
-- Incoming wave drives the internal store
-- Electron motion + store state generates an OUTPUT wave
-- The output wave frequency is modified by the internal dynamics
-- This could produce Compton-like wavelength shifts
+Wave-Only Interpretation of Frequency Shift:
+============================================
 
-The key addition is an output wave function:
-    u_out(t) = g(x, v, s, f_in)
+In our wave model, frequency shifts arise from:
 
-where the output depends on:
-- Electron position x and velocity v
-- Internal store s
-- Input frequency f_in
+1. DOPPLER EFFECT (Moving Source)
+   - Electron oscillates, acting as a moving wave source
+   - Source velocity v causes frequency shift: f_out = f_in(1 + v/c·cos(θ))
+   - This is purely wave mechanics
 
-The output wave frequency emerges from the motion dynamics.
+2. PARAMETRIC MODULATION
+   - Internal store s modulates the scattering amplitude
+   - Time-varying s creates sidebands at shifted frequencies
+   - Similar to AM/FM modulation in radio
+
+3. NONLINEAR WAVE MIXING
+   - Electron acts as nonlinear medium
+   - Input wave mixes with internal oscillation
+   - Produces sum and difference frequencies
+
+The Compton wavelength shift Δλ = (h/mc)(1 - cosθ) emerges when:
+- We account for the electron's relativistic response
+- The internal dynamics create a specific phase relationship
+- Energy conservation constrains allowed output frequencies
+
+KEY INSIGHT:
+In standard Compton, h appears because of photon quantization.
+In our wave model, the same formula could emerge from the MATERIAL
+RESPONSE rather than light quantization.
 """
 
 import numpy as np
@@ -123,20 +133,22 @@ class ComptonAtomModel(AtomModel):
         """
         Calculate the output (scattered) wave amplitude.
         
-        The output wave is driven by electron acceleration,
-        modulated by the internal store state.
+        WAVE-ONLY MODEL: The frequency shift arises from:
         
-        Classical picture: accelerating charge radiates
-        u_out ∝ d²x/dt² = dv/dt
-        
-        Store modulation: the internal state affects the
-        "effective resonance" of the atom, shifting output frequency
+        1. Doppler effect: electron velocity v modulates output frequency
+           f_out = f_in × (1 - v/c) ≈ f_in - f_in × v/c
+           
+        2. Parametric modulation: store s modulates amplitude
+           This creates sidebands at f ± Δf
+           
+        3. The combination produces a REDSHIFT (lower output frequency)
+           when the electron recoils from the incoming wave
         
         Args:
             t: Current time
             state: Current state [x, v, s]
             frequency: Input wave frequency
-            prev_state: Previous state (for acceleration calc)
+            prev_state: Previous state
             dt: Time step
             
         Returns:
@@ -144,25 +156,26 @@ class ComptonAtomModel(AtomModel):
         """
         x, v, s = state
         
-        # Calculate acceleration (radiation source)
-        if prev_state is not None:
-            _, v_prev, _ = prev_state
-            acceleration = (v - v_prev) / dt
-        else:
-            # Approximate from equations of motion
-            u = self.wave_input(t, frequency)
-            acceleration = -self.omega0_sq * x - self.damping * v + s * u
+        # Effective "velocity" for Doppler (normalized to c)
+        # In our model, this represents how the electron's motion
+        # modulates the re-emitted wave phase
+        v_effective = v * self.store_modulation
         
-        # Base output: proportional to acceleration
-        output = self.emission_coupling * acceleration
+        # Doppler-shifted frequency: when electron moves away, freq decreases
+        # The electron recoils from the incoming wave, creating redshift
+        doppler_factor = 1.0 - v_effective
+        f_shifted = frequency * doppler_factor
         
-        # Store modulation: shifts effective frequency
-        # When s is large, the "resonance" shifts
-        # This creates a frequency-dependent phase shift
-        phase_mod = self.store_modulation * s * np.sin(2 * np.pi * frequency * t)
-        output += phase_mod
+        # The output wave at the shifted frequency
+        # Amplitude depends on store (internal gain) and position (dipole)
+        amplitude = self.emission_coupling * (s * x + v)
+        output = amplitude * np.sin(2 * np.pi * f_shifted * t)
         
-        return output
+        # Add the fundamental re-emission (Rayleigh-like scattering)
+        # This is the coherent part at the original frequency
+        rayleigh = 0.3 * self.emission_coupling * x * np.sin(2 * np.pi * frequency * t)
+        
+        return output + rayleigh
     
     def output_wave_complex(
         self, 
