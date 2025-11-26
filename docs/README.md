@@ -170,6 +170,20 @@ This model explores the possibility that quantum-mechanical phenomena like the p
 
 This doesn't claim to replace quantum mechanics, but explores what aspects of photoelectric behavior can emerge from wave-only models.
 
+## Physics Analysis
+
+See [PHYSICS_ANALYSIS.md](PHYSICS_ANALYSIS.md) for a deep dive into:
+- Why the frequency threshold emerges
+- Physical interpretation of each parameter
+- What the mysterious "store" variable might represent
+- Connection to real material properties
+
+## The Key Insight
+
+> **"The quantum is not in the light, but in the response."**
+
+Our model suggests that the photoelectric threshold emerges from MATERIAL PROPERTIES, not from light being quantized. The internal dynamics of matter (the store variable, coherence, coupling) determine whether and when electrons escape.
+
 ## License
 
 MIT License - Free for research and educational use.
