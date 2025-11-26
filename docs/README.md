@@ -148,17 +148,72 @@ To achieve photoelectric-like behavior:
 3. **β large enough** for store to charge above threshold
 4. **α not too small** so below-threshold decays properly
 
+## Recent Developments
+
+### 1. Crystal Lattice Black Box Model
+
+The project now includes a comprehensive model of the crystal lattice as a "black box" containing:
+- Electron dynamics (position, velocity)
+- Internal store/coherence mechanism  
+- Local electromagnetic fields
+- Lattice vibrations (phonons)
+- Collective excitations (plasmons)
+- Polarization dynamics
+
+See `src/crystal_lattice_model.py` for the full 9-variable state-space model.
+
+### 2. Complete System of Equations
+
+The model now includes multiple equation types working together:
+- **Linear DEs**: Kinematic relations (dx/dt = v)
+- **Harmonic oscillator**: Damped driven oscillation
+- **Polynomial (f²)**: The KEY threshold-creating term
+- **Product terms**: Coupling between subsystems (s·E, v·E)
+- **Nonlinear terms**: Power absorption |v·E|
+
+### 3. Compton Scattering Extension
+
+Wave emission from accelerating electrons is now modeled! See `src/compton.py`:
+- Larmor radiation from accelerating charges
+- Doppler-based frequency shifts
+- Store-modulated output waves
+- Analysis of Compton-like wavelength shifts
+
+### 4. Multi-Frequency Driving
+
+The model now supports multiple simultaneous driving frequencies:
+- Test whether two sub-threshold frequencies together can cause escape
+- This is a KEY testable prediction that differs from the photon model!
+
+### 5. Material Comparison
+
+Map model parameters to real materials (Na, K, Cu, Au, Cs) and compare:
+- Work functions → binding frequency ω₀
+- Coherence times → store decay α
+- Electron density → coupling β
+
+## Testable Predictions
+
+Our wave-only model makes several predictions that **differ from the photon model**:
+
+| Prediction | Wave Model | Photon Model |
+|------------|------------|--------------|
+| **Temperature dependence** | Threshold increases with T | No change |
+| **Pulse duration** | Threshold increases for ultrashort pulses | No change |
+| **Two sub-threshold freqs** | Could cause emission together | Never causes emission |
+| **Surface cleanliness** | Affects threshold sharpness | No effect |
+| **Crystal orientation** | Different faces = different thresholds | Orientation-independent |
+| **Extreme intensity** | Slight threshold decrease | Strictly independent |
+
+These predictions could be tested experimentally to validate or refine the model.
+
 ## Future Directions
 
-### Compton-Like Scattering
-
-The next step would be to add an **output wave** mechanism:
-
-```
-u_out(t) = g(x, v, s, f)
-```
-
-This could model how the internal store + electron motion emit a scattered wave with shifted frequency, potentially reproducing Compton-like behavior through wave mechanics.
+- Extend to 3D crystal lattice geometry
+- Include relativistic corrections for high frequencies
+- Model specific materials with ab-initio parameters
+- Investigate connections to stochastic electrodynamics (SED)
+- Explore implications for light propagation medium
 
 ## Physics Notes
 
